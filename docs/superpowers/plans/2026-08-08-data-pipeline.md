@@ -128,7 +128,7 @@ tests/
   `by_allocine_code(code) -> Venue | None`, `independents() -> tuple[Venue, ...]`,
   `chains() -> tuple[Venue, ...]`.
 
-- [ ] **Step 1: Write `pyproject.toml`**
+- [x] **Step 1: Write `pyproject.toml`**
 
 ```toml
 [project]
@@ -153,7 +153,7 @@ target-version = "py313"
 line-length = 100
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `tests/test_venues.py`:
 
@@ -201,12 +201,12 @@ def test_dulac_venues_carry_dulac_ids():
     }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `pytest tests/test_venues.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'cinepipeline'`
 
-- [ ] **Step 4: Write `cinepipeline/core/venues.py`**
+- [x] **Step 4: Write `cinepipeline/core/venues.py`**
 
 Create the empty `__init__.py` files first, then:
 
@@ -326,12 +326,12 @@ def chains() -> tuple[Venue, ...]:
     return tuple(v for v in VENUES if v.kind == "chain")
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `pytest tests/test_venues.py -v`
 Expected: PASS, 6 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add pyproject.toml cinepipeline tests/test_venues.py
@@ -360,7 +360,7 @@ git commit -m "feat: add venue catalogue with resolved AlloCine codes"
   - `normalise.title_key(raw) -> str`
   - `normalise.parse_version(experiences) -> Version`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_normalise.py`:
 
@@ -451,12 +451,12 @@ def test_screening_start_paris_property():
     assert s.start_paris.minute == 15
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_normalise.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'cinepipeline.core.models'`
 
-- [ ] **Step 3: Write `cinepipeline/core/models.py`**
+- [x] **Step 3: Write `cinepipeline/core/models.py`**
 
 ```python
 from datetime import datetime
@@ -503,7 +503,7 @@ class Screening(BaseModel):
         return (self.venue_id, self.start_utc, self.title_key)
 ```
 
-- [ ] **Step 4: Write `cinepipeline/core/normalise.py`**
+- [x] **Step 4: Write `cinepipeline/core/normalise.py`**
 
 ```python
 import unicodedata
@@ -551,12 +551,12 @@ def parse_version(experiences: Iterable[str]) -> Version:
     return Version.VF
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pytest tests/test_normalise.py -v`
 Expected: PASS, 10 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add cinepipeline/core/models.py cinepipeline/core/normalise.py tests/test_normalise.py
@@ -582,7 +582,7 @@ git commit -m "feat: add screening model and timezone-safe normalisation"
   - `http.client()` async context manager yielding a configured `httpx.AsyncClient`.
   - `http.GATE` — `asyncio.Semaphore(4)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_base.py`:
 
@@ -606,12 +606,12 @@ def test_failed_venues_default_empty():
     assert r.ok_venues == set()
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_base.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
-- [ ] **Step 3: Write `cinepipeline/http.py`**
+- [x] **Step 3: Write `cinepipeline/http.py`**
 
 ```python
 import asyncio
@@ -653,7 +653,7 @@ async def get_json(c: httpx.AsyncClient, url: str):
     return resp.json()
 ```
 
-- [ ] **Step 4: Write `cinepipeline/adapters/base.py`**
+- [x] **Step 4: Write `cinepipeline/adapters/base.py`**
 
 ```python
 from dataclasses import dataclass, field
@@ -681,12 +681,12 @@ class Adapter(Protocol):
     async def fetch(self) -> AdapterResult: ...
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `pytest tests/test_base.py -v`
 Expected: PASS, 3 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add cinepipeline/http.py cinepipeline/adapters/base.py tests/test_base.py
@@ -709,7 +709,7 @@ git commit -m "feat: add adapter protocol and shared http client"
   - `parse_venue_page(html: str, venue_id: str, fetched_at: datetime) -> list[Screening]`
   - `AllocineAdapter` class with `slug = "allocine"` and `async fetch()`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_allocine.py`:
 
@@ -767,12 +767,12 @@ def test_parse_venue_page_titles_are_populated():
     assert all(s.title_key for s in out)
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_allocine.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'cinepipeline.adapters.allocine'`
 
-- [ ] **Step 3: Write `cinepipeline/adapters/allocine.py`**
+- [x] **Step 3: Write `cinepipeline/adapters/allocine.py`**
 
 ```python
 """AlloCine adapter - primary source, covers every catalogued venue with a code.
@@ -883,12 +883,12 @@ class AllocineAdapter:
         return result
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pytest tests/test_allocine.py -v`
 Expected: PASS, 6 tests
 
-- [ ] **Step 5: Sanity-check against the live site once**
+- [x] **Step 5: Sanity-check against the live site once**
 
 Run:
 
@@ -898,7 +898,7 @@ python -c "import asyncio,datetime as d; from cinepipeline.adapters.allocine imp
 
 Expected: a non-zero count. If zero, the markup has changed — stop and inspect before continuing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add cinepipeline/adapters/allocine.py tests/test_allocine.py
@@ -920,7 +920,7 @@ git commit -m "feat: add AlloCine adapter with per-venue isolation"
   - `extract_accessibility(payload: dict) -> dict[str, dict]` keyed by canonical venue id.
   - `DulacAdapter` with `slug = "dulac"` and `async fetch()`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_dulac.py`:
 
@@ -982,12 +982,12 @@ def test_accessibility_keyed_by_canonical_venue():
     assert "hall_accessible" in acc["arlequin"]
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_dulac.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
-- [ ] **Step 3: Write `cinepipeline/adapters/dulac.py`**
+- [x] **Step 3: Write `cinepipeline/adapters/dulac.py`**
 
 ```python
 """Dulac Cinemas adapter - authoritative for its five venues.
@@ -1095,12 +1095,12 @@ class DulacAdapter:
         return result
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pytest tests/test_dulac.py -v`
 Expected: PASS, 6 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add cinepipeline/adapters/dulac.py tests/test_dulac.py
@@ -1120,7 +1120,7 @@ git commit -m "feat: add Dulac adapter handling naive-UTC timestamps"
 - Produces: `merge(groups: list[list[Screening]]) -> list[Screening]` and
   `SOURCE_PRIORITY: dict[str, int]` (lower wins).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_dedupe.py`:
 
@@ -1181,12 +1181,12 @@ def test_output_sorted_by_start_then_venue():
     assert [s.venue_id for s in out] == ["aaa", "zzz"]
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_dedupe.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
-- [ ] **Step 3: Write `cinepipeline/core/dedupe.py`**
+- [x] **Step 3: Write `cinepipeline/core/dedupe.py`**
 
 ```python
 """Merge screenings across sources.
@@ -1226,12 +1226,12 @@ def merge(groups: list[list[Screening]]) -> list[Screening]:
     return sorted(best.values(), key=lambda s: (s.start_utc, s.venue_id, s.title_key))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pytest tests/test_dedupe.py -v`
 Expected: PASS, 5 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add cinepipeline/core/dedupe.py tests/test_dedupe.py
@@ -1260,7 +1260,7 @@ git commit -m "feat: add cross-source deduplication with operator priority"
 
 The score threshold is **0.55**; below that, no match.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_tmdb.py`:
 
@@ -1308,18 +1308,18 @@ def test_missing_overrides_file_is_empty(tmp_path):
     assert tmdb.load_overrides(tmp_path / "nope.json") == {}
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_tmdb.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
-- [ ] **Step 3: Create `tmdb_overrides.json` at the repo root**
+- [x] **Step 3: Create `tmdb_overrides.json` at the repo root**
 
 ```json
 {}
 ```
 
-- [ ] **Step 4: Write `cinepipeline/metadata/tmdb.py`**
+- [x] **Step 4: Write `cinepipeline/metadata/tmdb.py`**
 
 ```python
 """TMDB enrichment.
@@ -1440,12 +1440,12 @@ class TMDBClient:
         return out
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pytest tests/test_tmdb.py -v`
 Expected: PASS, 7 tests
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add cinepipeline/metadata/tmdb.py tmdb_overrides.json tests/test_tmdb.py
@@ -1485,7 +1485,7 @@ git commit -m "feat: add TMDB enrichment with scoring and manual overrides"
 }
 ```
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_output.py`:
 
@@ -1558,12 +1558,12 @@ def test_write_creates_file(tmp_path):
     assert written["screenings"][0]["venue_id"] == "le-champo"
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_output.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'cinepipeline.output'`
 
-- [ ] **Step 3: Write `cinepipeline/output.py`**
+- [x] **Step 3: Write `cinepipeline/output.py`**
 
 ```python
 """The JSON contract consumed by the frontend."""
@@ -1634,12 +1634,12 @@ def write(payload: dict, out_dir: Path) -> None:
     )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pytest tests/test_output.py -v`
 Expected: PASS, 7 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add cinepipeline/output.py tests/test_output.py
@@ -1664,7 +1664,7 @@ failed, reuse that venue's entries from the baseline payload unchanged (keeping 
 original `fetched_at`). Never carry forward a venue that succeeded — an empty successful
 result legitimately means "nothing on".
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_pipeline.py`:
 
@@ -1700,12 +1700,12 @@ def test_fresh_data_wins_over_baseline_for_same_venue():
     assert out[0]["fetched_at"] == "2026-08-08T12:00:00+00:00"
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pytest tests/test_pipeline.py -v`
 Expected: FAIL — `ImportError: cannot import name 'carry_forward'`
 
-- [ ] **Step 3: Write `cinepipeline/__main__.py`**
+- [x] **Step 3: Write `cinepipeline/__main__.py`**
 
 ```python
 """Entry point. Fetches, merges, enriches and writes the static payload.
@@ -1789,24 +1789,24 @@ if __name__ == "__main__":
     raise SystemExit(asyncio.run(run()))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pytest tests/test_pipeline.py -v`
 Expected: PASS, 3 tests
 
-- [ ] **Step 5: Run the whole suite**
+- [x] **Step 5: Run the whole suite**
 
 Run: `pytest -v`
 Expected: PASS, all tests across all files
 
-- [ ] **Step 6: Run the pipeline for real**
+- [x] **Step 6: Run the pipeline for real**
 
 Run: `python -m cinepipeline`
 Expected: a line like `wrote NNNN screenings, NNN films, 0 failed venues`, and
 `web/public/data/screenings.json` on disk. Without `TMDB_API_KEY` set, films will be 0 —
 that is correct degradation, not a failure.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add cinepipeline/__main__.py tests/test_pipeline.py
@@ -1826,7 +1826,7 @@ git commit -m "feat: add pipeline orchestration with stale carry-forward"
 - Consumes: `python -m cinepipeline` (Task 9), adapters (Tasks 4–5).
 - Produces: no Python interfaces. `contract-check.yml` runs `pytest -m contract`.
 
-- [ ] **Step 1: Add the contract marker to `pyproject.toml`**
+- [x] **Step 1: Add the contract marker to `pyproject.toml`**
 
 Append under `[tool.pytest.ini_options]`:
 
@@ -1835,7 +1835,7 @@ markers = ["contract: hits live sources; excluded from the default run"]
 addopts = "-m 'not contract'"
 ```
 
-- [ ] **Step 2: Write `tests/test_contract.py`**
+- [x] **Step 2: Write `tests/test_contract.py`**
 
 ```python
 """Live-source shape assertions. Run daily, separately from the refresh job,
@@ -1880,12 +1880,12 @@ def test_dulac_dates_still_naive():
     )
 ```
 
-- [ ] **Step 3: Run the contract tests once by hand**
+- [x] **Step 3: Run the contract tests once by hand**
 
 Run: `pytest -m contract -v`
 Expected: PASS, 4 tests. A failure here means a source changed and the adapter needs work.
 
-- [ ] **Step 4: Write `.github/workflows/refresh.yml`**
+- [x] **Step 4: Write `.github/workflows/refresh.yml`**
 
 ```yaml
 name: refresh
@@ -1921,7 +1921,7 @@ jobs:
 
 The Vercel deploy step is added in Plan 2, once `web/` exists.
 
-- [ ] **Step 5: Write `.github/workflows/contract-check.yml`**
+- [x] **Step 5: Write `.github/workflows/contract-check.yml`**
 
 ```yaml
 name: contract-check
@@ -1942,7 +1942,7 @@ jobs:
       - run: pytest -m contract -v
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .github pyproject.toml tests/test_contract.py
