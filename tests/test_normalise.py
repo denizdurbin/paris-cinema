@@ -3,8 +3,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from cinepipeline.core.models import Screening, Version
 from cinepipeline.core import normalise
+from cinepipeline.core.models import Screening, Version
 
 PARIS = ZoneInfo("Europe/Paris")
 

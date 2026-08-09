@@ -1,6 +1,7 @@
 import unicodedata
+from collections.abc import Iterable
 from datetime import UTC, datetime
-from typing import Iterable, Literal
+from typing import Literal
 
 from cinepipeline.core.models import PARIS, Version
 
