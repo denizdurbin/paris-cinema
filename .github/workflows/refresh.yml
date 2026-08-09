@@ -1,0 +1,29 @@
+name: refresh
+on:
+  schedule:
+    - cron: '5 7-21 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -e .
+      - run: python -m cinepipeline
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          BASELINE_URL: ${{ vars.BASELINE_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenings
+          path: web/public/data/screenings.json

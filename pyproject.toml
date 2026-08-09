@@ -14,6 +14,8 @@ dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.5"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["contract: hits live sources; excluded from the default run"]
+addopts = "-m 'not contract'"
 
 [tool.ruff]
 target-version = "py313"
