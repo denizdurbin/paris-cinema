@@ -65,8 +65,18 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
         return 1
 
     merged = dedupe.merge([r.screenings for r in results])
-    titles = {s.film_key: s.title_marquee for s in merged if s.film_key and not s.is_event}
-    films = await TMDBClient().enrich(titles)
+
+    # Events are excluded from automatic matching: titles like "Kaleidoscope -
+    # seance speciale" are not films and TMDB returns confident nonsense for them.
+    # An explicit override outranks that heuristic, though, because real films do
+    # get programmed in cine-club slots and a manual decision should always win.
+    tmdb = TMDBClient()
+    titles = {
+        s.film_key: s.title_marquee
+        for s in merged
+        if s.film_key and (not s.is_event or s.film_key in tmdb.overrides)
+    }
+    films = await tmdb.enrich(titles)
 
     payload = output.build_payload(
         merged, films, list(results), dulac.accessibility, generated_at
