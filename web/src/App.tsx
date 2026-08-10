@@ -8,6 +8,8 @@ import { NowView } from "./views/NowView";
 import { WeekView } from "./views/WeekView";
 import { CinemasView } from "./views/CinemasView";
 import { CinemaDetail } from "./views/CinemaDetail";
+import { ChainsView } from "./views/ChainsView";
+import { FilmDetail } from "./views/FilmDetail";
 
 export default function App() {
   const [payload, setPayload] = useState<Payload | null>(null);
@@ -40,6 +42,8 @@ export default function App() {
           <Route path="/week" element={<WeekView payload={payload} now={now} />} />
           <Route path="/cinemas" element={<CinemasView payload={payload} now={now} />} />
           <Route path="/cinema/:id" element={<CinemaDetail payload={payload} now={now} />} />
+          <Route path="/chains" element={<ChainsView payload={payload} now={now} />} />
+          <Route path="/film/:key" element={<FilmDetail payload={payload} now={now} />} />
         </Routes>
       </main>
     </div>

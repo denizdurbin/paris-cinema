@@ -173,3 +173,7 @@
 
 .access { list-style: none; padding: 0; margin: var(--s3) 0 0; font-size: var(--fs-xs); }
 .access li { padding: 2px 0; }
+
+.film-head { display: flex; gap: var(--s4); align-items: flex-start; flex-wrap: wrap; }
+.film-head > div { flex: 1 1 260px; min-width: 0; }
+.film-overview { font-size: var(--fs-sm); margin-top: var(--s3); }
