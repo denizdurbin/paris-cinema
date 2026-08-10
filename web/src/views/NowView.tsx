@@ -57,7 +57,7 @@ export function NowView({ payload, now }: { payload: Payload; now: Date }) {
       )}
 
       {buckets.justStarted.length > 0 && (
-        <Section title="Just started — you'd still make it" count={buckets.justStarted.length}>
+        <Section title="Just started, you can still make it!" count={buckets.justStarted.length}>
           {render(buckets.justStarted, true)}
         </Section>
       )}
