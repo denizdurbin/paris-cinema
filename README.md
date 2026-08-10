@@ -90,8 +90,16 @@ frontend or it will have nothing to display.
 cd web && npm install && npm run dev
 ```
 
-Set `TMDB_API_KEY` to enable posters, English titles and synopses. Without it the pipeline
-degrades cleanly to a text-only listing — that path is supported, not broken.
+Posters, English titles and synopses need a TMDB key. Copy `.env.example` to `.env` and
+fill it in — `.env` is git-ignored and loaded automatically when the `dev` extras are
+installed. Alternatively export `TMDB_API_KEY` in your shell; the pipeline only ever reads
+the environment, so both work.
+
+Use the **API Key (v3 auth)**, the 32-character hex string — not the API Read Access Token,
+which is a JWT and will be rejected.
+
+Without a key the pipeline degrades cleanly to a text-only listing. That path is supported,
+not broken: posters render as absent rather than as placeholders.
 
 ### Tests
 
