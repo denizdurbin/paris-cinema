@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Payload } from "../types";
+import { displayTitle } from "../data";
 import { formatParisTime, parisDayKey } from "../time";
 
 export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
   const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
 
   const stats = useMemo(() => {
     const today = parisDayKey(now);
@@ -22,7 +24,6 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
   }, [payload, now]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const independents = payload.venues.filter((v) => v.kind === "independent");
     const matched = q
       ? independents.filter((v) => v.name.toLowerCase().includes(q))
@@ -30,7 +31,7 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
     return matched.sort(
       (a, b) => a.arrondissement - b.arrondissement || a.name.localeCompare(b.name)
     );
-  }, [payload, query]);
+  }, [payload, q]);
 
   const groups = useMemo(() => {
     const m = new Map<number, typeof filtered>();
@@ -42,6 +43,31 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
     return [...m.entries()].sort(([a], [b]) => a - b);
   }, [filtered]);
 
+  const films = useMemo(() => {
+    if (!q) return [];
+    const today = parisDayKey(now);
+    const byKey = new Map<string, { title: string; marquee: string; count: number }>();
+    for (const s of payload.screenings) {
+      if (!s.film_key) continue;
+      if (parisDayKey(s.start_utc) < today) continue;
+      const existing = byKey.get(s.film_key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        byKey.set(s.film_key, {
+          title: displayTitle(payload, s),
+          marquee: s.title_marquee,
+          count: 1,
+        });
+      }
+    }
+    return [...byKey.entries()]
+      .filter(([, f]) =>
+        f.title.toLowerCase().includes(q) || f.marquee.toLowerCase().includes(q)
+      )
+      .sort((a, b) => a[1].title.localeCompare(b[1].title));
+  }, [payload, q, now]);
+
   return (
     <>
       <input
@@ -49,11 +75,31 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search cinemas"
-        aria-label="Search cinemas"
+        placeholder="Search cinemas or films"
+        aria-label="Search cinemas or films"
       />
 
-      {filtered.length === 0 && <p className="empty">No cinema matches “{query}”.</p>}
+      {q && films.length === 0 && filtered.length === 0 && (
+        <p className="empty">No cinema or film matches “{query}”.</p>
+      )}
+
+      {films.length > 0 && (
+        <section className="section">
+          <h2 className="section-title">Films</h2>
+          {films.map(([key, f]) => (
+            <Link
+              className="venue"
+              to={`/film/${encodeURIComponent(key)}`}
+              key={key}
+            >
+              <span className="venue-name">{f.title}</span>
+              <span className="venue-meta faint tnum">
+                {f.count} screening{f.count !== 1 ? "s" : ""}
+              </span>
+            </Link>
+          ))}
+        </section>
+      )}
 
       {groups.map(([arr, venues]) => (
         <section className="section" key={arr}>
