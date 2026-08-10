@@ -18,6 +18,16 @@ from cinepipeline.adapters.dulac import DulacAdapter
 from cinepipeline.core import dedupe
 from cinepipeline.metadata.tmdb import TMDBClient
 
+# Local convenience only: load .env if python-dotenv is installed (it is a dev
+# extra). CI supplies real environment variables from GitHub secrets and never
+# has this package, so the import failing is the normal path there.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 DEFAULT_OUT = Path("web/public/data")
 BASELINE_URL = os.environ.get(
     "BASELINE_URL", "https://paris-cinema.vercel.app/data/screenings.json"
