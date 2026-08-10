@@ -4,12 +4,22 @@ import { venueMap } from "../data";
 import { bucketScreenings, formatParisTime, parisDayKey } from "../time";
 import { ScreeningRow } from "../components/ScreeningRow";
 import { Section } from "../components/Section";
+import { useVenueFilter } from "../useVenueFilter";
+import { VenueFilter } from "../components/VenueFilter";
 
 export function NowView({ payload, now }: { payload: Payload; now: Date }) {
   const venues = useMemo(() => venueMap(payload), [payload]);
+  const filter = useVenueFilter(payload.venues);
+
+  // bucketScreenings derives its allow-list from the venues array it is given,
+  // so narrowing that array is all the filtering required. time.ts is untouched.
+  const visibleVenues = useMemo(
+    () => payload.venues.filter((v) => filter.isVisible(v.id)),
+    [payload.venues, filter]
+  );
   const buckets = useMemo(
-    () => bucketScreenings(payload.screenings, payload.venues, now),
-    [payload, now]
+    () => bucketScreenings(payload.screenings, visibleVenues, now),
+    [payload.screenings, visibleVenues, now]
   );
 
   const nothingSoon =
@@ -39,10 +49,13 @@ export function NowView({ payload, now }: { payload: Payload; now: Date }) {
 
   return (
     <>
+      <VenueFilter venues={payload.venues} {...filter} />
       {nothingSoon && (
         <Section title="Starting soon">
           <p className="empty">
-            {nextUp ? (
+            {filter.visibleCount === 0 ? (
+              "No cinemas selected — open the filter above and pick some."
+            ) : nextUp ? (
               <>
                 Nothing starting soon. Next up:{" "}
                 {formatParisTime(nextUp.start_utc)} at{" "}
