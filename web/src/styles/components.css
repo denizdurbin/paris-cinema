@@ -311,3 +311,42 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 11, 0.85);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: var(--s4);
+}
+
+.popup-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--s6) var(--s5);
+  max-width: 26rem;
+  text-align: center;
+}
+
+.popup-hearts {
+  color: var(--accent);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--s2);
+  white-space: nowrap;
+}
+
+.popup-greeting { font-weight: 600; }
+
+.popup-line { margin: var(--s4) 0 0; font-size: var(--fs-md); line-height: 1.6; }
+
+.popup-sig { margin-top: var(--s4); color: var(--accent); }
+
+.popup-close {
+  margin-top: var(--s4);
+  color: var(--accent);
+  font-size: var(--fs-2xl);
+  line-height: 1;
+}
+.popup-close:hover { color: var(--text); }
