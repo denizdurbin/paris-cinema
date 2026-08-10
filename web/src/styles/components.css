@@ -230,3 +230,5 @@
   color: var(--text-faint);
 }
 .chip-on { color: var(--bg); background: var(--accent); }
+
+.chain-total { font-size: var(--fs-xs); margin: var(--s4) 0 0; }
