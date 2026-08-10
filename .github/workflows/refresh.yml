@@ -6,8 +6,13 @@ on:
   push:
     branches: [master]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 concurrency:
-  group: refresh
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -15,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
@@ -23,7 +29,25 @@ jobs:
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           BASELINE_URL: ${{ vars.BASELINE_URL }}
-      - uses: actions/upload-artifact@v5
+
+      - uses: actions/setup-node@v5
         with:
-          name: screenings
-          path: web/public/data/screenings.json
+          node-version: '22'
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
