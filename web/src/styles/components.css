@@ -87,3 +87,31 @@
 .row-book:hover { color: var(--bg); background: var(--accent); }
 
 .empty { color: var(--text-faint); font-size: var(--fs-sm); padding: var(--s3) 0; }
+
+.head { padding: var(--s6) 0 var(--s4); }
+
+.head-title {
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.freshness { display: block; font-size: var(--fs-xs); color: var(--text-faint); margin-top: var(--s1); }
+.freshness-stale { color: var(--warn); }
+
+.nav {
+  display: flex;
+  gap: var(--s5);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--s2);
+}
+
+.nav-item {
+  padding: var(--s2) 0;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+}
+.nav-item:hover { color: var(--text-dim); }
+.nav-item-on { color: var(--text); border-bottom-color: var(--accent); }
