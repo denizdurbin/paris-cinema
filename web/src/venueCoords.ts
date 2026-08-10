@@ -54,7 +54,7 @@ export function venuePosition(venue: Venue): { x: number; y: number } {
 
 /** Hand-drawn Seine path (rough S-curve through central Paris). */
 export const SEINE_PATH =
-  "M 312 245 Q 270 230 230 210 Q 190 190 185 160 Q 180 130 150 125 Q 120 120 90 140 Q 60 160 32 177";
+  "M 312 252 Q 280 230 252 194 Q 230 170 202 160 Q 190 155 172 143 Q 130 135 92 143 Q 60 155 32 190 Q 18 215 12 245";
 
 /** Arrondissement number labels, precomputed in SVG coordinates. */
 export const ARRONDISSEMENT_LABELS: { num: number; x: number; y: number }[] =
