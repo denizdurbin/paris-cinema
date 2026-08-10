@@ -51,7 +51,7 @@ export function ScreeningRow({ payload, screening, venue, now, showCountdown = f
           target="_blank"
           rel="noopener noreferrer"
         >
-          Book
+          Reserve
         </a>
       )}
     </article>
