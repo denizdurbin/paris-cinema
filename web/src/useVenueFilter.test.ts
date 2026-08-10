@@ -77,4 +77,23 @@ describe("useVenueFilter", () => {
     expect(result.current.isFiltered).toBe(false);
     expect(result.current.visibleCount).toBe(3);
   });
+
+  it("setVisible hides multiple ids at once", () => {
+    const { result } = renderHook(() => useVenueFilter(VENUES));
+    act(() => result.current.setVisible(["a", "b"], false));
+    expect(result.current.isVisible("a")).toBe(false);
+    expect(result.current.isVisible("b")).toBe(false);
+    expect(result.current.visibleCount).toBe(1);
+  });
+
+  it("setVisible un-hides previously hidden ids", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(["a", "b"]));
+    const { result } = renderHook(() => useVenueFilter(VENUES));
+    expect(result.current.visibleCount).toBe(1);
+    act(() => result.current.setVisible(["a", "b"], true));
+    expect(result.current.isVisible("a")).toBe(true);
+    expect(result.current.isVisible("b")).toBe(true);
+    expect(result.current.visibleCount).toBe(3);
+    expect(result.current.isFiltered).toBe(false);
+  });
 });

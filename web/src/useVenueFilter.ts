@@ -48,6 +48,18 @@ export function useVenueFilter(allVenues: Venue[]) {
 
   const hideAll = useCallback((ids: string[]) => setHidden(new Set(ids)), []);
 
+  /** Sets visibility for a set of ids at once (used by arrondissement group toggles). */
+  const setVisible = useCallback((ids: string[], visible: boolean) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (visible) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
   const visibleCount = independents.filter((v) => !hidden.has(v.id)).length;
 
   return {
@@ -56,6 +68,7 @@ export function useVenueFilter(allVenues: Venue[]) {
     toggle,
     showAll,
     hideAll,
+    setVisible,
     visibleCount,
     totalCount: independents.length,
     isFiltered: visibleCount < independents.length,
