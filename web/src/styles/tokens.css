@@ -1,0 +1,33 @@
+:root {
+  /* surfaces — near-black, two steps only */
+  --bg: #0a0a0b;
+  --surface: #131316;
+  --line: #232327;
+
+  /* text — hierarchy by opacity, not colour */
+  --text: #f4f4f5;
+  --text-dim: #a1a1aa;
+  --text-faint: #6b6b73;
+
+  /* one accent: warm marquee amber */
+  --accent: #e5b567;
+  --accent-dim: #8a6d3e;
+
+  /* status */
+  --live: #7ec97e;
+  --warn: #d98c5f;
+
+  /* spacing — 4px scale, never improvise */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+  /* type */
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  --fs-xs: 0.75rem;  --fs-sm: 0.8125rem; --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem; --fs-xl: 1.5rem;    --fs-2xl: 2rem;
+
+  --radius: 3px;
+  --maxw: 720px;
+}
