@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Payload, Screening, Venue } from "../types";
-import { parisDayKey } from "../time";
-import { ScreeningRow } from "../components/ScreeningRow";
+import { displayTitle } from "../data";
+import { formatParisTime, parisDayKey } from "../time";
 
 export function ChainsView({ payload, now }: { payload: Payload; now: Date }) {
   const chains = useMemo(() => {
@@ -68,7 +69,7 @@ export function ChainsView({ payload, now }: { payload: Payload; now: Date }) {
             {total} screenings left today across {groups.length} locations
           </p>
           {groups.map(({ venue, screenings }) => (
-            <section className="section" key={venue.id}>
+            <section className="chain-section" key={venue.id}>
               <h2 className="section-title">
                 {venue.name}
                 <span className="section-count faint">
@@ -76,15 +77,35 @@ export function ChainsView({ payload, now }: { payload: Payload; now: Date }) {
                   <sup>e</sup> · {screenings.length}
                 </span>
               </h2>
-              {screenings.map((s) => (
-                <ScreeningRow
-                  key={`${s.start_utc}-${s.title_marquee}`}
-                  payload={payload}
-                  screening={s}
-                  venue={venue}
-                  now={now}
-                />
-              ))}
+              <div className="chain-strip">
+                {screenings.map((s) => {
+                  const body = (
+                    <>
+                      <span className="chain-card-time tnum">
+                        {formatParisTime(s.start_utc)}
+                      </span>
+                      <span className="chain-card-title">
+                        {displayTitle(payload, s)}
+                      </span>
+                      {s.version !== "UNKNOWN" && (
+                        <span className="tag">{s.version}</span>
+                      )}
+                    </>
+                  );
+                  const key = `${s.start_utc}-${s.title_marquee}`;
+                  return s.film_key ? (
+                    <Link
+                      key={key}
+                      className="chain-card"
+                      to={`/film/${encodeURIComponent(s.film_key)}`}
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <div key={key} className="chain-card">{body}</div>
+                  );
+                })}
+              </div>
             </section>
           ))}
         </>

@@ -279,3 +279,36 @@
 }
 .filter-group-head input[type="checkbox"] { accent-color: var(--accent); }
 .filter-group-label { color: var(--text-dim); }
+
+.chain-section { margin: var(--s5) 0; }
+
+.chain-strip {
+  display: flex;
+  gap: var(--s2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: var(--s2);
+}
+.chain-strip::-webkit-scrollbar { display: none; }
+
+.chain-card {
+  flex: 0 0 auto;
+  width: 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dim);
+}
+.chain-card:hover { color: var(--text); }
+
+.chain-card-time { font-size: var(--fs-sm); color: var(--text); }
+
+.chain-card-title {
+  font-size: var(--fs-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
