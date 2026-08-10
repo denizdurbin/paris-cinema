@@ -4,9 +4,14 @@ import type { Payload } from "../types";
 import { displayTitle } from "../data";
 import { formatParisTime, parisDayKey } from "../time";
 
-/** Lowercase and strip diacritics, so "ete" matches "Été". */
+/** Lowercase, fold ligatures and strip diacritics: "ete" matches "Été", "oeil" matches "Œil". */
 function fold(s: string): string {
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  return s
+    .replace(/œ/gi, "oe")
+    .replace(/æ/gi, "ae")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 }
 
 export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
