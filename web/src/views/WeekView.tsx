@@ -3,31 +3,48 @@ import type { Payload } from "../types";
 import { venueMap } from "../data";
 import { formatDayLabel, groupByDay, parisDayKey } from "../time";
 import { ScreeningRow } from "../components/ScreeningRow";
+import { useVenueFilter } from "../useVenueFilter";
+import { VenueFilter } from "../components/VenueFilter";
 
 export function WeekView({ payload, now }: { payload: Payload; now: Date }) {
   const venues = useMemo(() => venueMap(payload), [payload]);
+  const filter = useVenueFilter(payload.venues);
+  const { isVisible } = filter;
 
   const days = useMemo(() => {
     const independents = new Set(
-      payload.venues.filter((v) => v.kind === "independent").map((v) => v.id)
+      payload.venues
+        .filter((v) => v.kind === "independent" && isVisible(v.id))
+        .map((v) => v.id)
     );
     const today = parisDayKey(now);
     const upcoming = payload.screenings.filter(
       (s) => independents.has(s.venue_id) && parisDayKey(s.start_utc) >= today
     );
     return [...groupByDay(upcoming).entries()].slice(0, 7);
-  }, [payload, now]);
+  }, [payload, now, isVisible]);
 
   const [selected, setSelected] = useState<string | null>(null);
   const active = selected ?? days[0]?.[0] ?? null;
   const screenings = days.find(([d]) => d === active)?.[1] ?? [];
 
   if (days.length === 0) {
-    return <p className="empty">No upcoming screenings.</p>;
+    return (
+      <>
+        <VenueFilter venues={payload.venues} {...filter} />
+        <p className="empty">
+          {filter.visibleCount === 0
+            ? "No cinemas selected — open the filter above and pick some."
+            : "No upcoming screenings."}
+        </p>
+      </>
+    );
   }
 
   return (
     <>
+      <VenueFilter venues={payload.venues} {...filter} />
+
       <div className="daybar">
         {days.map(([day, list]) => (
           <button
