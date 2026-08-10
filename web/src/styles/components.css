@@ -232,3 +232,26 @@
 .chip-on { color: var(--bg); background: var(--accent); }
 
 .chain-total { font-size: var(--fs-xs); margin: var(--s4) 0 0; }
+
+.paris-map { width: 100%; aspect-ratio: 360 / 320; display: block; }
+
+.map-seine { stroke: var(--line); stroke-width: 1.5; fill: none; }
+
+.map-arr {
+  fill: var(--text-faint);
+  font-size: 8px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  opacity: 0.4;
+}
+
+.map-dot {
+  cursor: pointer;
+  animation: dot-in 0.3s ease-out backwards;
+}
+.map-dot-on { fill: var(--accent); }
+.map-dot-off { fill: var(--text-faint); opacity: 0.35; }
+
+@keyframes dot-in {
+  from { opacity: 0; }
+}
