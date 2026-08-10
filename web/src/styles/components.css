@@ -177,3 +177,19 @@
 .film-head { display: flex; gap: var(--s4); align-items: flex-start; flex-wrap: wrap; }
 .film-head > div { flex: 1 1 260px; min-width: 0; }
 .film-overview { font-size: var(--fs-sm); margin-top: var(--s3); }
+
+.banner {
+  font-size: var(--fs-xs);
+  color: var(--warn);
+  background: var(--surface);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  margin-top: var(--s3);
+}
+
+@media (max-width: 480px) {
+  .row { grid-template-columns: 3.25rem auto 1fr; }
+  .row-book { grid-column: 3; justify-self: start; margin-top: var(--s1); }
+  .head { padding-top: var(--s5); }
+  .nav { gap: var(--s4); }
+}
