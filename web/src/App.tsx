@@ -5,6 +5,7 @@ import type { Payload } from "./types";
 import { Nav } from "./components/Nav";
 import { Freshness } from "./components/Freshness";
 import { NowView } from "./views/NowView";
+import { WeekView } from "./views/WeekView";
 
 export default function App() {
   const [payload, setPayload] = useState<Payload | null>(null);
@@ -34,6 +35,7 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<NowView payload={payload} now={now} />} />
+          <Route path="/week" element={<WeekView payload={payload} now={now} />} />
         </Routes>
       </main>
     </div>

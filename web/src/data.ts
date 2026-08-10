@@ -1,7 +1,10 @@
 import type { Film, Payload, Screening, Venue } from "./types";
 
 export async function loadPayload(): Promise<Payload> {
-  const res = await fetch("/data/screenings.json", { cache: "no-cache" });
+  // BASE_URL is "/paris-cinema/" on GitHub Pages and "/" in dev. An absolute
+  // "/data/..." path would 404 on Pages.
+  const url = `${import.meta.env.BASE_URL}data/screenings.json`;
+  const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load showtimes (HTTP ${res.status})`);
   return (await res.json()) as Payload;
 }

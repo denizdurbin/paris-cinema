@@ -115,3 +115,26 @@
 }
 .nav-item:hover { color: var(--text-dim); }
 .nav-item-on { color: var(--text); border-bottom-color: var(--accent); }
+
+.daybar {
+  display: flex;
+  gap: var(--s2);
+  overflow-x: auto;
+  padding: var(--s5) 0 var(--s3);
+  scrollbar-width: none;
+}
+.daybar::-webkit-scrollbar { display: none; }
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.day-on { color: var(--bg); background: var(--accent); }
+.day-label { font-size: var(--fs-xs); }
+.day-count { font-size: 0.6875rem; opacity: 0.7; }
