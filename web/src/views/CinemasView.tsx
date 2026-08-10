@@ -4,9 +4,14 @@ import type { Payload } from "../types";
 import { displayTitle } from "../data";
 import { formatParisTime, parisDayKey } from "../time";
 
+/** Lowercase and strip diacritics, so "ete" matches "Été". */
+function fold(s: string): string {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
 export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
   const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
+  const q = fold(query.trim());
 
   const stats = useMemo(() => {
     const today = parisDayKey(now);
@@ -26,7 +31,7 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
   const filtered = useMemo(() => {
     const independents = payload.venues.filter((v) => v.kind === "independent");
     const matched = q
-      ? independents.filter((v) => v.name.toLowerCase().includes(q))
+      ? independents.filter((v) => fold(v.name).includes(q))
       : independents;
     return matched.sort(
       (a, b) => a.arrondissement - b.arrondissement || a.name.localeCompare(b.name)
@@ -63,7 +68,7 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
     }
     return [...byKey.entries()]
       .filter(([, f]) =>
-        f.title.toLowerCase().includes(q) || f.marquee.toLowerCase().includes(q)
+        fold(f.title).includes(q) || fold(f.marquee).includes(q)
       )
       .sort((a, b) => a[1].title.localeCompare(b[1].title));
   }, [payload, q, now]);
