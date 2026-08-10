@@ -255,3 +255,27 @@
 @keyframes dot-in {
   from { opacity: 0; }
 }
+
+.filter-view-toggle { display: flex; gap: var(--s2); margin-left: auto; }
+
+.filter-view {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  padding: var(--s1) var(--s2);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.filter-view-on { color: var(--bg); background: var(--accent); }
+
+.filter-groups { display: flex; flex-direction: column; gap: var(--s4); }
+
+.filter-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s2);
+  cursor: pointer;
+}
+.filter-group-head input[type="checkbox"] { accent-color: var(--accent); }
+.filter-group-label { color: var(--text-dim); }
