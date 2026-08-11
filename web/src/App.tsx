@@ -5,7 +5,6 @@ import type { Payload } from "./types";
 import { Nav } from "./components/Nav";
 import { Freshness } from "./components/Freshness";
 import { SourceBanner } from "./components/SourceBanner";
-import { WelcomePopup } from "./components/WelcomePopup";
 import { NowView } from "./views/NowView";
 import { WeekView } from "./views/WeekView";
 import { CinemasView } from "./views/CinemasView";
@@ -33,7 +32,6 @@ export default function App() {
 
   return (
     <div className="wrap">
-      <WelcomePopup />
       <header className="head">
         <h1 className="head-title">Paris Cinema</h1>
         <Freshness generatedAt={payload.generated_at} now={now} />
