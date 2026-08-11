@@ -13,11 +13,17 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  # GitHub's starter workflow ships `false`, on the assumption that deploys are
+  # rare, manual and precious. These run 15 times a day and are disposable, so
+  # queueing behind a wedged predecessor is strictly worse than replacing it.
+  # A stuck Pages deployment on 2026-08-11 held the queue for 13 hours; with
+  # this the next hourly run clears it and the site is at most one hour stale.
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
@@ -45,6 +51,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # Backstop: a wedged Pages deployment otherwise queues indefinitely with no
+    # steps and no failure, which looks exactly like "the cron stopped working".
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
