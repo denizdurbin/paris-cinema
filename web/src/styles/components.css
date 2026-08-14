@@ -38,7 +38,15 @@
   color: var(--accent);
 }
 
-.poster { display: block; border-radius: var(--radius); background: var(--surface); }
+/* aspect-ratio reserves the box before the lazy image loads, so scroll
+   restoration and countdown re-renders don't make rows jump. */
+.poster {
+  display: block;
+  border-radius: var(--radius);
+  background: var(--surface);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+}
 .poster-w185 { width: 40px; }
 .poster-w500 { width: 100%; max-width: 220px; }
 

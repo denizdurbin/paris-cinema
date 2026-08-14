@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { loadPayload } from "./data";
 import type { Payload } from "./types";
 import { Nav } from "./components/Nav";
+import { ScrollManager } from "./components/ScrollManager";
 import { Freshness } from "./components/Freshness";
 import { SourceBanner } from "./components/SourceBanner";
 import { NowView } from "./views/NowView";
@@ -32,6 +33,7 @@ export default function App() {
 
   return (
     <div className="wrap">
+      <ScrollManager />
       <header className="head">
         <h1 className="head-title">Paris Cinema</h1>
         <Freshness generatedAt={payload.generated_at} now={now} />
