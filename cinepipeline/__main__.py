@@ -34,10 +34,16 @@ BASELINE_URL = os.environ.get(
 )
 
 
-def carry_forward(fresh: list[dict], baseline: list[dict], failed: set[str]) -> list[dict]:
+def carry_forward(
+    fresh: list[dict], baseline: list[dict], failed: set[str], now: datetime
+) -> list[dict]:
     fresh_venues = {e["venue_id"] for e in fresh}
     carried = [
-        e for e in baseline if e["venue_id"] in failed and e["venue_id"] not in fresh_venues
+        e
+        for e in baseline
+        if e["venue_id"] in failed
+        and e["venue_id"] not in fresh_venues
+        and datetime.fromisoformat(e["start_utc"]) > now
     ]
     return fresh + carried
 
@@ -84,7 +90,7 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
 
     failed = {v for r in results for v in r.failed_venues}
     payload["screenings"] = carry_forward(
-        payload["screenings"], baseline.get("screenings", []), failed
+        payload["screenings"], baseline.get("screenings", []), failed, generated_at
     )
 
     output.write(payload, out_dir)

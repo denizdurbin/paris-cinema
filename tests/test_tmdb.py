@@ -39,3 +39,25 @@ def test_overrides_round_trip(tmp_path):
 
 def test_missing_overrides_file_is_empty(tmp_path):
     assert tmdb.load_overrides(tmp_path / "nope.json") == {}
+
+
+def test_director_of_picks_director_from_crew():
+    detail = {"credits": {"crew": [
+        {"job": "Producer", "name": "Someone"},
+        {"job": "Director", "name": "Jacques Tati"},
+    ]}}
+    assert tmdb.director_of(detail) == "Jacques Tati"
+
+
+def test_director_of_joins_multiple_directors():
+    detail = {"credits": {"crew": [
+        {"job": "Director", "name": "A"},
+        {"job": "Director", "name": "B"},
+    ]}}
+    assert tmdb.director_of(detail) == "A, B"
+
+
+def test_director_of_handles_missing_credits():
+    assert tmdb.director_of({}) is None
+    assert tmdb.director_of({"credits": None}) is None
+    assert tmdb.director_of({"credits": {"crew": []}}) is None

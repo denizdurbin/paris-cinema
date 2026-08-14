@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { Payload } from "../types";
 import { posterUrl, venueMap } from "../data";
-import { formatDayLabel, groupByDay, parisDayKey } from "../time";
+import { formatDayLabel, groupByDay, isUpcoming } from "../time";
 import { ScreeningRow } from "../components/ScreeningRow";
 
 export function FilmDetail({ payload, now }: { payload: Payload; now: Date }) {
@@ -11,9 +11,8 @@ export function FilmDetail({ payload, now }: { payload: Payload; now: Date }) {
   const film = key ? (payload.films[key] ?? null) : null;
 
   const screenings = useMemo(() => {
-    const today = parisDayKey(now);
     return payload.screenings.filter(
-      (s) => s.film_key === key && parisDayKey(s.start_utc) >= today
+      (s) => s.film_key === key && isUpcoming(s.start_utc, now)
     );
   }, [payload, key, now]);
 
@@ -34,7 +33,11 @@ export function FilmDetail({ payload, now }: { payload: Payload; now: Date }) {
               <p className="faint">{marquee}</p>
             )}
             <p className="faint tnum">
-              {[film?.year, film?.runtime && `${film.runtime} min`]
+              {[
+                film?.year,
+                film?.runtime && `${film.runtime} min`,
+                film?.director && `dir. ${film.director}`,
+              ]
                 .filter(Boolean)
                 .join(" · ")}
             </p>

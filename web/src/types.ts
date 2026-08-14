@@ -20,6 +20,7 @@ export interface Film {
   backdrop_path: string | null;
   runtime: number | null;
   year: number | null;
+  director: string | null;
 }
 
 export interface Screening {

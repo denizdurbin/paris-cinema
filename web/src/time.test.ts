@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { bucketScreenings, parisDayKey, formatParisTime, minutesUntil } from "./time";
+import {
+  bucketScreenings, parisDayKey, formatParisTime, isUpcoming, minutesUntil,
+} from "./time";
 import type { Screening, Venue } from "./types";
 
 const NOW = new Date("2026-08-09T18:00:00Z"); // 20:00 in Paris (CEST)
@@ -41,6 +43,21 @@ describe("minutesUntil", () => {
   });
   it("is negative for the past", () => {
     expect(minutesUntil("2026-08-09T17:50:00Z", NOW)).toBe(-10);
+  });
+});
+
+describe("isUpcoming", () => {
+  it("is true for a screening later today", () => {
+    expect(isUpcoming("2026-08-09T21:00:00Z", NOW)).toBe(true);
+  });
+
+  it("is true within the grace period", () => {
+    expect(isUpcoming("2026-08-09T17:50:00Z", NOW)).toBe(true);
+  });
+
+  it("is false once the grace period has passed, same day or not", () => {
+    expect(isUpcoming("2026-08-09T17:40:00Z", NOW)).toBe(false);
+    expect(isUpcoming("2026-08-08T21:00:00Z", NOW)).toBe(false);
   });
 });
 

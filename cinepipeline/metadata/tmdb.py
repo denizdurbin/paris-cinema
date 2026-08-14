@@ -28,6 +28,14 @@ class FilmMeta(BaseModel):
     backdrop_path: str | None = None
     runtime: int | None = None
     year: int | None = None
+    director: str | None = None
+
+
+def director_of(detail: dict) -> str | None:
+    """Director name(s) from a detail payload fetched with append_to_response=credits."""
+    crew = (detail.get("credits") or {}).get("crew") or []
+    names = [m["name"] for m in crew if m.get("job") == "Director" and m.get("name")]
+    return ", ".join(names) or None
 
 
 def _similarity(a: str, b: str) -> float:
@@ -83,7 +91,9 @@ class TMDBClient:
                     try:
                         if forced:
                             detail = await get_json(
-                                c, f"{API}/movie/{forced}?api_key={self.api_key}&language=en-US"
+                                c,
+                                f"{API}/movie/{forced}?api_key={self.api_key}"
+                                "&language=en-US&append_to_response=credits",
                             )
                         else:
                             found = await get_json(
@@ -98,7 +108,7 @@ class TMDBClient:
                             detail = await get_json(
                                 c,
                                 f"{API}/movie/{best['id']}?api_key={self.api_key}"
-                                "&language=en-US",
+                                "&language=en-US&append_to_response=credits",
                             )
                         out[key] = FilmMeta(
                             tmdb_id=detail.get("id"),
@@ -108,6 +118,7 @@ class TMDBClient:
                             backdrop_path=detail.get("backdrop_path"),
                             runtime=detail.get("runtime"),
                             year=int((detail.get("release_date") or "0")[:4] or 0) or None,
+                            director=director_of(detail),
                         )
                     except Exception:
                         self.unmatched.append(display)

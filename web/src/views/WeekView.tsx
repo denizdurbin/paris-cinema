@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Payload } from "../types";
 import { venueMap } from "../data";
-import { formatDayLabel, groupByDay, parisDayKey } from "../time";
+import { formatDayLabel, groupByDay, isUpcoming } from "../time";
 import { ScreeningRow } from "../components/ScreeningRow";
 import { useVenueFilter } from "../useVenueFilter";
 import { VenueFilter } from "../components/VenueFilter";
@@ -17,9 +17,8 @@ export function WeekView({ payload, now }: { payload: Payload; now: Date }) {
         .filter((v) => v.kind === "independent" && isVisible(v.id))
         .map((v) => v.id)
     );
-    const today = parisDayKey(now);
     const upcoming = payload.screenings.filter(
-      (s) => independents.has(s.venue_id) && parisDayKey(s.start_utc) >= today
+      (s) => independents.has(s.venue_id) && isUpcoming(s.start_utc, now)
     );
     return [...groupByDay(upcoming).entries()].slice(0, 7);
   }, [payload, now, isVisible]);

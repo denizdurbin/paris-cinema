@@ -32,6 +32,15 @@ export function minutesUntil(iso: string, now: Date): number {
   return Math.round((new Date(iso).getTime() - now.getTime()) / 60000);
 }
 
+/**
+ * True while a screening is still actionable: up to GRACE_MINUTES after start.
+ * Day-key filters alone keep this morning's screenings visible all day when
+ * the data goes stale; comparing against `now` hides them as they pass.
+ */
+export function isUpcoming(iso: string, now: Date): boolean {
+  return minutesUntil(iso, now) >= -GRACE_MINUTES;
+}
+
 /** "in 12 min" / "just started" / "20:15" */
 export function countdownLabel(iso: string, now: Date): string {
   const m = minutesUntil(iso, now);

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Payload } from "../types";
 import { displayTitle } from "../data";
-import { formatParisTime, parisDayKey } from "../time";
+import { formatParisTime, isUpcoming, parisDayKey } from "../time";
 
 /** Lowercase, fold ligatures and strip diacritics: "ete" matches "Été", "oeil" matches "Œil". */
 function fold(s: string): string {
@@ -55,11 +55,10 @@ export function CinemasView({ payload, now }: { payload: Payload; now: Date }) {
 
   const films = useMemo(() => {
     if (!q) return [];
-    const today = parisDayKey(now);
     const byKey = new Map<string, { title: string; marquee: string; count: number }>();
     for (const s of payload.screenings) {
       if (!s.film_key) continue;
-      if (parisDayKey(s.start_utc) < today) continue;
+      if (!isUpcoming(s.start_utc, now)) continue;
       const existing = byKey.get(s.film_key);
       if (existing) {
         existing.count += 1;

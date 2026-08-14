@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { Payload } from "../types";
-import { formatDayLabel, groupByDay, parisDayKey } from "../time";
+import { formatDayLabel, groupByDay, isUpcoming } from "../time";
 import { ScreeningRow } from "../components/ScreeningRow";
 
 const ACCESSIBILITY_LABELS: Record<string, string> = {
@@ -18,11 +18,10 @@ export function CinemaDetail({ payload, now }: { payload: Payload; now: Date }) 
 
   const days = useMemo(() => {
     if (!venue) return [];
-    const today = parisDayKey(now);
     return [
       ...groupByDay(
         payload.screenings.filter(
-          (s) => s.venue_id === venue.id && parisDayKey(s.start_utc) >= today
+          (s) => s.venue_id === venue.id && isUpcoming(s.start_utc, now)
         )
       ).entries(),
     ];
