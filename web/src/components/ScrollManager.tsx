@@ -1,12 +1,18 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
 
 /**
  * BrowserRouter does no scroll management: without this, following a link
  * keeps the previous page's scroll offset and the back button lands at the
- * top instead of where the user was. We keep one saved position per history
- * entry (location.key), restore it on POP (back/forward) and scroll to top
- * on PUSH/REPLACE.
+ * top instead of where the user was. We record the scroll position of every
+ * history entry (keyed by location.key) as the user scrolls, restore it on
+ * POP (back/forward) and scroll to top on PUSH/REPLACE.
+ *
+ * Everything runs in layout effects: the scroll is applied synchronously
+ * before paint (no flash at the wrong offset), and the previous entry's
+ * scroll listener is detached at commit time — before the browser can fire
+ * a clamping scroll event for a shorter new page, which would otherwise
+ * overwrite the old entry's true position.
  */
 const positions = new Map<string, number>();
 
@@ -18,15 +24,13 @@ export function ScrollManager() {
   const { key } = useLocation();
   const navType = useNavigationType();
 
-  // The cleanup runs with the *previous* key just before the new effects,
-  // while the window is still scrolled where the user left the old page.
-  useEffect(() => {
-    return () => {
-      positions.set(key, window.scrollY);
-    };
+  useLayoutEffect(() => {
+    const save = () => positions.set(key, window.scrollY);
+    window.addEventListener("scroll", save, { passive: true });
+    return () => window.removeEventListener("scroll", save);
   }, [key]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo(0, navType === "POP" ? (positions.get(key) ?? 0) : 0);
   }, [key, navType]);
 

@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Payload } from "../types";
 import { posterUrl, venueMap } from "../data";
 import { formatDayLabel, groupByDay, isUpcoming } from "../time";
+import { BackLink } from "../components/BackLink";
 import { ScreeningRow } from "../components/ScreeningRow";
 
 export function FilmDetail({ payload, now }: { payload: Payload; now: Date }) {
@@ -24,7 +25,7 @@ export function FilmDetail({ payload, now }: { payload: Payload; now: Date }) {
   return (
     <>
       <div className="section">
-        <Link to="/" className="back faint">← Back</Link>
+        <BackLink to="/" className="back faint">← Back</BackLink>
         <div className="film-head">
           {poster && <img className="poster poster-w500" src={poster} alt={title} />}
           <div>

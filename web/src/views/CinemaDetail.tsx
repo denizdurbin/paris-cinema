@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Payload } from "../types";
 import { formatDayLabel, groupByDay, isUpcoming } from "../time";
+import { BackLink } from "../components/BackLink";
 import { ScreeningRow } from "../components/ScreeningRow";
 
 const ACCESSIBILITY_LABELS: Record<string, string> = {
@@ -32,7 +33,7 @@ export function CinemaDetail({ payload, now }: { payload: Payload; now: Date }) 
   return (
     <>
       <div className="section">
-        <Link to="/cinemas" className="back faint">← Cinemas</Link>
+        <BackLink to="/cinemas" className="back faint">← Cinemas</BackLink>
         <h2 className="detail-title">{venue.name}</h2>
         <p className="faint">
           {venue.arrondissement}<sup>e</sup> arrondissement

@@ -36,6 +36,7 @@ describe("ScrollManager", () => {
 
     // The user has scrolled down the list, then opens a film.
     setScrollY(500);
+    fireEvent.scroll(window); // the manager records positions on scroll
     fireEvent.click(screen.getByText("film"));
     expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
 
