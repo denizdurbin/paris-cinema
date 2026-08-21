@@ -8,6 +8,7 @@ Booking URLs are base64 hidden inside the class attribute with `ACr` noise.
 import base64
 import binascii
 import json
+import re
 from datetime import datetime
 
 from selectolax.parser import HTMLParser
@@ -36,6 +37,33 @@ def decode_booking_url(class_attr: str) -> str | None:
     return None
 
 
+def parse_release_year(card) -> int | None:
+    """Year of the original release date.
+
+    Scoped to `.meta-body-info`: restorations carry a second `.date` span under
+    a "Date de reprise" label in a sibling `.meta-body-item`, and that one is
+    the re-release year, not the film's.
+    """
+    info = card.css_first(".meta-body-info")
+    if info is None:
+        return None
+    date_node = info.css_first(".date")
+    if date_node is None:
+        return None
+    m = re.search(r"\b(\d{4})\b", date_node.text(strip=True))
+    return int(m.group(1)) if m else None
+
+
+def parse_directors(card) -> str | None:
+    """Director name(s), comma-joined when there are several."""
+    names = [
+        node.text(strip=True)
+        for node in card.css(".meta-body-direction .dark-grey-link")
+        if node.text(strip=True)
+    ]
+    return ", ".join(names) or None
+
+
 def parse_venue_page(html: str, venue_id: str, fetched_at: datetime) -> list[Screening]:
     tree = HTMLParser(html)
     out: list[Screening] = []
@@ -49,6 +77,8 @@ def parse_venue_page(html: str, venue_id: str, fetched_at: datetime) -> list[Scr
             continue
         marquee = normalise.clean_title(raw_title)
         key = normalise.title_key(raw_title)
+        film_year = parse_release_year(card)
+        film_director = parse_directors(card)
 
         for item in card.css("[data-showtime-time]"):
             stamp = item.attributes.get("data-showtime-time")
@@ -75,6 +105,8 @@ def parse_venue_page(html: str, venue_id: str, fetched_at: datetime) -> list[Scr
                     fetched_at=fetched_at,
                     booking_url=decode_booking_url(item.attributes.get("class") or ""),
                     film_key=key,
+                    film_year=film_year,
+                    film_director=film_director,
                 )
             )
     return out

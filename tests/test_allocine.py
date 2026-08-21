@@ -49,3 +49,44 @@ def test_parse_venue_page_titles_are_populated():
     out = allocine.parse_venue_page(html, "ecoles-cinema-club", NOW)
     assert all(s.title_marquee for s in out)
     assert all(s.title_key for s in out)
+
+
+def _by_title(out, marquee):
+    return next(s for s in out if s.title_marquee == marquee)
+
+
+def test_parse_venue_page_extracts_year_and_director():
+    html = FIXTURE.read_text(encoding="utf-8")
+    out = allocine.parse_venue_page(html, "ecoles-cinema-club", NOW)
+    fellini = _by_title(out, "La Dolce Vita")
+    assert fellini.film_year == 1960
+    assert fellini.film_director == "Federico Fellini"
+    argento = _by_title(out, "Phenomena")
+    assert argento.film_year == 1985
+    assert argento.film_director == "Dario Argento"
+
+
+def test_parse_venue_page_joins_multiple_directors():
+    html = FIXTURE.read_text(encoding="utf-8")
+    out = allocine.parse_venue_page(html, "ecoles-cinema-club", NOW)
+    assert _by_title(out, "Le Plongeon").film_director == "Frank Perry, Sydney Pollack"
+
+
+def test_parse_venue_page_ignores_reprise_date():
+    """La Dolce Vita's card also carries "Date de reprise: 16 juillet 2014";
+    the hint must be the original 1960 release, not the restoration."""
+    html = FIXTURE.read_text(encoding="utf-8")
+    out = allocine.parse_venue_page(html, "ecoles-cinema-club", NOW)
+    assert _by_title(out, "La Dolce Vita").film_year == 1960
+
+
+def test_parse_release_year_and_directors_are_optional():
+    card = allocine.HTMLParser("<div></div>")
+    assert allocine.parse_release_year(card) is None
+    assert allocine.parse_directors(card) is None
+    no_date = allocine.HTMLParser(
+        '<div><div class="meta-body-info"><span class="date">prochainement</span></div>'
+        '<div class="meta-body-direction"></div></div>'
+    )
+    assert allocine.parse_release_year(no_date) is None
+    assert allocine.parse_directors(no_date) is None

@@ -1,0 +1,20 @@
+# Paris Cinema — Project Rules
+
+## Project Overview
+- `cinepipeline/` — Python pipeline that scrapes Paris cinema listings, normalises/dedupes them, and enriches with TMDB metadata.
+- `web/` — React + TypeScript frontend (Vite) that displays the listings.
+- `tests/` — pytest suite with fixtures in `tests/fixtures/`.
+
+## Python
+- Follow the existing style in `cinepipeline/core/` and `cinepipeline/adapters/`.
+- Use `pytest` for all tests; run the full suite before considering a task done.
+- Don't add new dependencies without updating `pyproject.toml`.
+
+## Frontend
+- TypeScript strict mode; follow existing patterns in `web/src/`.
+- Use `npm` (not pnpm/yarn) for the web package.
+
+## General
+- Never commit `.env` or API keys; use `.env.example` as the template.
+- TMDB overrides live in `tmdb_overrides.json` — edit it rather than hardcoding overrides.
+- Keep docs in `docs/` up to date when changing pipeline behavior.

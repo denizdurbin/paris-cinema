@@ -16,6 +16,8 @@ def test_allocine_venue_page_still_parses():
     html = httpx.get(url, headers=HEADERS, follow_redirects=True, timeout=30).text
     assert 'data-showtime-time="' in html, "AlloCine showtime attribute is gone"
     assert "movie-card-theater" in html, "AlloCine film card class is gone"
+    assert "meta-body-info" in html, "AlloCine release-date container is gone"
+    assert "meta-body-direction" in html, "AlloCine director block is gone"
 
 
 def test_allocine_booking_obfuscation_unchanged():

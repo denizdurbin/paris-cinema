@@ -25,6 +25,9 @@ class Screening(BaseModel):
     booking_url: str | None = None
     film_key: str | None = None
     is_event: bool = False
+    # Matching hints for TMDB enrichment; only AlloCiné cards carry them.
+    film_year: int | None = None
+    film_director: str | None = None
 
     @field_validator("start_utc", "fetched_at")
     @classmethod

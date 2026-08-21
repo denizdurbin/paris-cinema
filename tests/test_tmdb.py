@@ -61,3 +61,62 @@ def test_director_of_handles_missing_credits():
     assert tmdb.director_of({}) is None
     assert tmdb.director_of({"credits": None}) is None
     assert tmdb.director_of({"credits": {"crew": []}}) is None
+
+
+def test_year_hint_disambiguates_same_title_films():
+    """La Filmothèque screened Antonioni's La Notte (1961); AlloCiné's French
+    title for it is "La Nuit", which also names an unrelated 2026 short."""
+    recent = cand("La Nuit", year=2026)
+    recent["id"] = 2026
+    antonioni = cand("La Nuit", year=1961, orig="La Notte")
+    antonioni["id"] = 1961
+    out = tmdb.pick_best([recent, antonioni], "La Nuit", None, year=1961)
+    assert out is not None
+    assert out["id"] == 1961
+
+
+def test_year_hint_disambiguates_on_original_title_only():
+    """Same case, but TMDB's fr-FR title is not localised, so the 1961 film
+    only matches via original_title."""
+    recent = cand("La Nuit", year=2026)
+    recent["id"] = 2026
+    antonioni = cand("La Notte", year=1961)
+    antonioni["id"] = 1961
+    out = tmdb.pick_best([recent, antonioni], "La Nuit", None, year=1961)
+    assert out is not None
+    assert out["id"] == 1961
+
+
+def test_year_hint_absent_keeps_title_only_behaviour():
+    """Dulac films carry no hint: scoring must be identical to before."""
+    recent = cand("La Nuit", year=2026)
+    recent["id"] = 2026
+    antonioni = cand("La Nuit", year=1961, orig="La Notte")
+    antonioni["id"] = 1961
+    assert tmdb.score_candidate(recent, "La Nuit", None) == 1.0
+    assert tmdb.score_candidate(antonioni, "La Nuit", None) == 1.0
+
+
+def test_year_hint_tolerates_small_deltas():
+    """French release dates can sit 1-3 years from TMDB's earliest release."""
+    c = cand("Playtime", year=1967)
+    assert tmdb.score_candidate(c, "Playtime", None, year=1968) > 1.0
+    assert tmdb.score_candidate(c, "Playtime", None, year=1970) == 1.0
+    assert tmdb.score_candidate(c, "Playtime", None, year=1980) < 0.55
+
+
+def test_director_mismatch_only_when_both_sides_known():
+    assert tmdb.director_mismatch("Michelangelo Antonioni", "Someone Else")
+    assert not tmdb.director_mismatch("Michelangelo Antonioni", "michelangelo antonioni")
+    assert not tmdb.director_mismatch(None, "Someone Else")
+    assert not tmdb.director_mismatch("Michelangelo Antonioni", None)
+    assert not tmdb.director_mismatch(None, None)
+
+
+def test_director_mismatch_handles_multiple_directors():
+    assert not tmdb.director_mismatch("Sydney Pollack", "Frank Perry, Sydney Pollack")
+    assert tmdb.director_mismatch("Dario Argento", "Frank Perry, Sydney Pollack")
+
+
+def test_director_mismatch_is_accent_insensitive():
+    assert not tmdb.director_mismatch("Denis Côté", "Denis Cote")

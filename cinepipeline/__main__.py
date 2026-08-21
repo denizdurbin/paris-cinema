@@ -77,11 +77,19 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
     # An explicit override outranks that heuristic, though, because real films do
     # get programmed in cine-club slots and a manual decision should always win.
     tmdb = TMDBClient()
-    titles = {
-        s.film_key: s.title_marquee
-        for s in merged
-        if s.film_key and (not s.is_event or s.film_key in tmdb.overrides)
-    }
+    # film_key -> display title plus matching hints. Several screenings share a
+    # film_key; first non-null hint wins so runs are reproducible.
+    titles: dict[str, dict] = {}
+    for s in merged:
+        if not s.film_key or (s.is_event and s.film_key not in tmdb.overrides):
+            continue
+        hints = titles.setdefault(
+            s.film_key, {"title": s.title_marquee, "year": None, "director": None}
+        )
+        if hints["year"] is None:
+            hints["year"] = s.film_year
+        if hints["director"] is None:
+            hints["director"] = s.film_director
     films = await tmdb.enrich(titles)
 
     payload = output.build_payload(
@@ -96,8 +104,11 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
     output.write(payload, out_dir)
     print(
         f"wrote {len(payload['screenings'])} screenings, "
-        f"{len(payload['films'])} films, {len(failed)} failed venues"
+        f"{len(payload['films'])} films, {len(failed)} failed venues, "
+        f"{len(tmdb.unmatched)} unmatched films"
     )
+    for title in tmdb.unmatched:
+        print(f"  unmatched: {title}")
     return 0
 
 

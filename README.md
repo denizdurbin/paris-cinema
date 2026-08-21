@@ -15,7 +15,7 @@ combined, and mixing them buries exactly what this is for.
 
 | Part | State |
 | --- | --- |
-| Data pipeline (Python) | Working — 53 tests passing |
+| Data pipeline (Python) | Working — 68 tests passing |
 | Frontend (Vite + React) | In progress — see [the plan](docs/plans/2026-08-09-frontend.md) |
 | Deployment | Not yet live |
 
@@ -79,7 +79,7 @@ Requires Python 3.13 and Node 20.
 python -m venv .venv
 .venv/Scripts/activate        # Windows;  source .venv/bin/activate elsewhere
 pip install -e ".[dev]"
-pytest                        # 53 tests, offline against committed fixtures
+pytest                        # 68 tests, offline against committed fixtures
 python -m cinepipeline        # writes web/public/data/screenings.json
 ```
 
@@ -136,6 +136,13 @@ no offset. Everything is parsed to timezone-aware UTC on ingest and rendered in
 
 **AlloCiné obfuscates booking URLs** inside the element's `class` attribute — strip every
 `ACr`, pad, then base64-decode.
+
+**TMDB matching uses AlloCiné's own metadata as hints.** French release titles collide
+("La Nuit" names both Antonioni's 1961 *La Notte* and newer shorts), so title similarity
+alone is not enough. The adapter also reads each card's original release year and
+director; scoring rewards year agreement and a director mismatch vetoes the match — no
+poster is better than the wrong poster. Restorations carry a second "Date de reprise"
+date on the card; only the original release date is used.
 
 The full reasoning behind the architecture is in
 [the design spec](docs/superpowers/specs/2026-08-08-paris-cinema-app-design.md).
