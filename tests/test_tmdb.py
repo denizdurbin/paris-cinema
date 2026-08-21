@@ -1,4 +1,7 @@
 import json
+from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from cinepipeline.metadata import tmdb
 
@@ -120,3 +123,66 @@ def test_director_mismatch_handles_multiple_directors():
 
 def test_director_mismatch_is_accent_insensitive():
     assert not tmdb.director_mismatch("Denis Côté", "Denis Cote")
+
+
+def _detail(tmdb_id, title, year, director):
+    return {
+        "id": tmdb_id,
+        "title": title,
+        "release_date": f"{year}-01-01",
+        "credits": {"crew": [{"job": "Director", "name": director}]},
+    }
+
+
+@pytest.mark.asyncio
+async def test_enrich_retries_with_year_filter_for_generic_titles():
+    """"Girl" is buried under hundreds of same-word films; the year-filtered
+    retry pulls Shu Qi's 2025 film onto the first page."""
+    wrong = cand("Girl", year=2020)
+    wrong["id"] = 717634
+    right = cand("Girl", year=2025, orig="女孩")
+    right["id"] = 1357759
+
+    async def fake_get_json(client, url):
+        if "search/movie" in url and "year=2026" in url:
+            return {"results": [right]}
+        if "search/movie" in url:
+            return {"results": [wrong]}
+        if "movie/717634" in url:
+            return _detail(717634, "Girl", 2020, "Chad Faust")
+        if "movie/1357759" in url:
+            return _detail(1357759, "Girl", 2025, "Shu Qi")
+        raise AssertionError(f"unexpected url {url}")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=fake_get_json)):
+        out = await client.enrich(
+            {"girl": {"title": "Girl", "year": 2026, "director": "Shu Qi"}}
+        )
+    assert out["girl"].tmdb_id == 1357759
+    assert out["girl"].director == "Shu Qi"
+    assert client.unmatched == []
+
+
+@pytest.mark.asyncio
+async def test_enrich_without_year_hint_does_not_retry():
+    """Dulac films carry no year hint: one search, no retry."""
+    wrong = cand("Girl", year=2020)
+    wrong["id"] = 717634
+    calls = []
+
+    async def fake_get_json(client, url):
+        calls.append(url)
+        if "search/movie" in url:
+            return {"results": [wrong]}
+        if "movie/717634" in url:
+            return _detail(717634, "Girl", 2020, "Chad Faust")
+        raise AssertionError(f"unexpected url {url}")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=fake_get_json)):
+        out = await client.enrich(
+            {"girl": {"title": "Girl", "year": None, "director": None}}
+        )
+    assert out["girl"].tmdb_id == 717634
+    assert sum("search/movie" in u for u in calls) == 1

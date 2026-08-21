@@ -114,6 +114,54 @@ class TMDBClient:
         self.overrides = load_overrides()
         self.unmatched: list[str] = []
 
+    async def _search_and_detail(
+        self, c, display: str, hints: dict
+    ) -> dict | None:
+        """Search TMDB, pick the best candidate, fetch its detail.
+
+        Tries the plain fr-FR search first. If the best candidate is vetoed by
+        the director hint (or nothing clears the threshold) and a year hint is
+        available, retries with a year filter: generic one-word titles ("Girl",
+        "Paradise") bury the actual film under hundreds of more popular
+        same-word films, and the filter pulls it onto the first page.
+        """
+        year = hints.get("year")
+        director = hints.get("director")
+        urls = [
+            (
+                f"{API}/search/movie?api_key={self.api_key}"
+                f"&language=fr-FR&query={quote(display, safe='')}"
+            ),
+        ]
+        if year:
+            urls.append(f"{urls[0]}&year={year}")
+
+        for url in urls:
+            found = await get_json(c, url)
+            candidates = found.get("results", [])
+            if not candidates:
+                continue
+            # Check the top candidates in score order, not just the single
+            # best: same-title same-year films ("Paradise" x2 in 2026) tie on
+            # title+year, and the director hint is the only way to tell them
+            # apart.
+            ranked = sorted(
+                candidates,
+                key=lambda c: score_candidate(c, display, None, year=year),
+                reverse=True,
+            )
+            for candidate in ranked[:5]:
+                if score_candidate(candidate, display, None, year=year) < THRESHOLD:
+                    break
+                detail = await get_json(
+                    c,
+                    f"{API}/movie/{candidate['id']}?api_key={self.api_key}"
+                    "&language=en-US&append_to_response=credits",
+                )
+                if not director_mismatch(director, director_of(detail)):
+                    return detail
+        return None
+
     async def enrich(self, titles: dict[str, dict]) -> dict[str, FilmMeta]:
         """titles maps title_key -> {"title", "year", "director"} hints.
 
@@ -139,25 +187,10 @@ class TMDBClient:
                                 "&language=en-US&append_to_response=credits",
                             )
                         else:
-                            found = await get_json(
-                                c,
-                                f"{API}/search/movie?api_key={self.api_key}"
-                                f"&language=fr-FR&query={quote(display, safe='')}",
-                            )
-                            best = pick_best(
-                                found.get("results", []),
-                                display,
-                                None,
-                                year=hints.get("year"),
-                            )
-                            if best is None:
+                            detail = await self._search_and_detail(c, display, hints)
+                            if detail is None:
                                 self.unmatched.append(display)
                                 continue
-                            detail = await get_json(
-                                c,
-                                f"{API}/movie/{best['id']}?api_key={self.api_key}"
-                                "&language=en-US&append_to_response=credits",
-                            )
                         if director_mismatch(hints.get("director"), director_of(detail)):
                             self.unmatched.append(display)
                             continue
