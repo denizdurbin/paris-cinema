@@ -7,16 +7,18 @@ baseline so a failing source degrades to its previous data rather than vanishing
 import asyncio
 import os
 import sys
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+from pydantic import ValidationError
 
 from cinepipeline import output
 from cinepipeline.adapters.allocine import AllocineAdapter
 from cinepipeline.adapters.dulac import DulacAdapter
 from cinepipeline.core import dedupe
-from cinepipeline.metadata.tmdb import TMDBClient
+from cinepipeline.metadata.tmdb import FilmMeta, TMDBClient
 
 # Local convenience only: load .env if python-dotenv is installed (it is a dev
 # extra). CI supplies real environment variables from GitHub secrets and never
@@ -46,6 +48,33 @@ def carry_forward(
         and datetime.fromisoformat(e["start_utc"]) > now
     ]
     return fresh + carried
+
+
+def carry_forward_films(
+    fresh: dict[str, FilmMeta],
+    baseline: dict,
+    wanted: Iterable[str],
+    excluded: set[str],
+) -> dict[str, FilmMeta]:
+    """Keep baseline metadata for films still programmed but unmatched this run.
+
+    A transient TMDB failure must not strip posters and synopses the site
+    already had. Explicit null overrides win: they mean "never match this".
+    """
+    out = dict(fresh)
+    for key in wanted:
+        if key in out or key in excluded:
+            continue
+        meta = baseline.get(key)
+        if not isinstance(meta, dict):
+            continue
+        try:
+            out[key] = FilmMeta(
+                **{k: v for k, v in meta.items() if k in FilmMeta.model_fields}
+            )
+        except ValidationError:
+            continue
+    return out
 
 
 def _load_baseline(url: str) -> dict:
@@ -91,6 +120,14 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
         if hints["director"] is None:
             hints["director"] = s.film_director
     films = await tmdb.enrich(titles)
+    # Same degrade-not-vanish rule as screenings: if TMDB drops a film it
+    # matched last run, keep the baseline's metadata while it's still showing.
+    films = carry_forward_films(
+        films,
+        baseline.get("films", {}),
+        titles,
+        {k for k, v in tmdb.overrides.items() if v is None},
+    )
 
     payload = output.build_payload(
         merged, films, list(results), dulac.accessibility, generated_at

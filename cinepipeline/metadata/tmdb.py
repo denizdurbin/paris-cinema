@@ -5,12 +5,14 @@ Score candidates on title similarity plus runtime and year agreement; heritage
 programming is full of same-title remakes and restorations.
 """
 
+import asyncio
 import json
 import os
 from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import quote
 
+import httpx
 from pydantic import BaseModel
 
 from cinepipeline.core.normalise import title_key
@@ -19,6 +21,25 @@ from cinepipeline.http import client, get_json
 API = "https://api.themoviedb.org/3"
 THRESHOLD = 0.55
 OVERRIDES_PATH = Path("tmdb_overrides.json")
+RETRY_ATTEMPTS = 3
+RETRY_BACKOFF = 1.0
+
+
+async def _get_json_retried(c, url: str) -> dict:
+    """One transient TMDB error must not strip a film's poster for a whole run:
+    retry with backoff. A 404 is a real answer (bad override id), not transient.
+    """
+    for attempt in range(RETRY_ATTEMPTS):
+        try:
+            return await get_json(c, url)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404 or attempt == RETRY_ATTEMPTS - 1:
+                raise
+        except httpx.HTTPError:
+            if attempt == RETRY_ATTEMPTS - 1:
+                raise
+        await asyncio.sleep(RETRY_BACKOFF * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 class FilmMeta(BaseModel):
@@ -137,7 +158,7 @@ class TMDBClient:
             urls.append(f"{urls[0]}&year={year}")
 
         for url in urls:
-            found = await get_json(c, url)
+            found = await _get_json_retried(c, url)
             candidates = found.get("results", [])
             if not candidates:
                 continue
@@ -153,7 +174,7 @@ class TMDBClient:
             for candidate in ranked[:5]:
                 if score_candidate(candidate, display, None, year=year) < THRESHOLD:
                     break
-                detail = await get_json(
+                detail = await _get_json_retried(
                     c,
                     f"{API}/movie/{candidate['id']}?api_key={self.api_key}"
                     "&language=en-US&append_to_response=credits",
@@ -181,7 +202,7 @@ class TMDBClient:
                     forced = self.overrides.get(key)
                     try:
                         if forced:
-                            detail = await get_json(
+                            detail = await _get_json_retried(
                                 c,
                                 f"{API}/movie/{forced}?api_key={self.api_key}"
                                 "&language=en-US&append_to_response=credits",

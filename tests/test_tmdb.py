@@ -1,6 +1,7 @@
 import json
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 from cinepipeline.metadata import tmdb
@@ -186,3 +187,46 @@ async def test_enrich_without_year_hint_does_not_retry():
         )
     assert out["girl"].tmdb_id == 717634
     assert sum("search/movie" in u for u in calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_enrich_retries_transient_tmdb_errors():
+    """One flaky TMDB response must not strip a film's poster for a whole run."""
+    detail = _detail(1488613, "A Turkish Case", 2026, "Some Director")
+    calls = []
+
+    async def fake_get_json(client, url):
+        calls.append(url)
+        if len(calls) == 1:
+            raise httpx.ConnectTimeout("boom")
+        return detail
+
+    client = tmdb.TMDBClient(api_key="test")
+    client.overrides = {"uneaffaireturque": 1488613}
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=fake_get_json)):
+        out = await client.enrich(
+            {"uneaffaireturque": {"title": "Une affaire turque", "year": None, "director": None}}
+        )
+    assert out["uneaffaireturque"].tmdb_id == 1488613
+    assert len(calls) == 2
+    assert client.unmatched == []
+
+
+@pytest.mark.asyncio
+async def test_enrich_does_not_retry_404():
+    """A 404 is a real answer (bad override id), not a transient error."""
+    async def not_found(client, url):
+        raise httpx.HTTPStatusError(
+            "404", request=httpx.Request("GET", url), response=httpx.Response(404)
+        )
+
+    client = tmdb.TMDBClient(api_key="test")
+    client.overrides = {"uneaffaireturque": 999999999}
+    mock = AsyncMock(side_effect=not_found)
+    with patch.object(tmdb, "get_json", new=mock):
+        out = await client.enrich(
+            {"uneaffaireturque": {"title": "Une affaire turque", "year": None, "director": None}}
+        )
+    assert out == {}
+    assert client.unmatched == ["Une affaire turque"]
+    assert mock.await_count == 1
