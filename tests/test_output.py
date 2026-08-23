@@ -24,7 +24,20 @@ def a_screening():
 
 def test_payload_has_contract_keys():
     p = output.build_payload([a_screening()], {}, [], {}, NOW)
-    assert set(p) == {"generated_at", "sources", "venues", "films", "screenings"}
+    assert set(p) == {
+        "generated_at", "sources", "venues", "films", "screenings", "unmatched_films",
+    }
+
+
+def test_unmatched_films_serialised():
+    misses = [{"key": "lola", "title": "Lola", "reason": "director_veto"}]
+    p = output.build_payload([], {}, [], {}, NOW, unmatched_films=misses)
+    assert p["unmatched_films"] == misses
+
+
+def test_unmatched_films_defaults_to_empty():
+    p = output.build_payload([], {}, [], {}, NOW)
+    assert p["unmatched_films"] == []
 
 
 def test_generated_at_is_iso_utc():

@@ -283,3 +283,80 @@ async def test_enrich_does_not_retry_404():
     assert out == {}
     assert client.unmatched == ["Une affaire turque"]
     assert mock.await_count == 1
+def test_director_mismatch_accepts_dropped_maternal_surname():
+    """La Fille Condor: AlloCiné credits "Alvaro Olmos Torrico", TMDB "Álvaro
+    Olmos" — the maternal surname is dropped on one side. Same person."""
+    assert not tmdb.director_mismatch("Alvaro Olmos Torrico", "Álvaro Olmos")
+    assert not tmdb.director_mismatch("Álvaro Olmos", "Alvaro Olmos Torrico")
+    assert tmdb.director_mismatch("Alvaro Olmos Torrico", "Pedro Almodóvar")
+
+
+@pytest.mark.asyncio
+async def test_unmatched_reason_no_candidates():
+    async def empty(client, url):
+        return {"results": []}
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=empty)):
+        await client.enrich({"x": {"title": "Nope", "year": None, "director": None}})
+    assert client.unmatched_detail == [
+        {"key": "x", "title": "Nope", "reason": "no_candidates"}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_unmatched_reason_below_threshold():
+    async def only_jaws(client, url):
+        if "search/movie" in url:
+            return {"results": [cand("Jaws", year=1975)]}
+        raise AssertionError("no detail call expected below threshold")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=only_jaws)):
+        await client.enrich({"x": {"title": "Playtime", "year": None, "director": None}})
+    assert client.unmatched_detail[0]["reason"] == "below_threshold"
+
+
+@pytest.mark.asyncio
+async def test_unmatched_reason_director_veto():
+    lola = cand("Lola", year=1961)
+    lola["id"] = 40641
+
+    async def vetoed(client, url):
+        if "search/movie" in url:
+            return {"results": [lola]}
+        return _detail(40641, "Lola", 1961, "Someone Else")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=vetoed)):
+        await client.enrich(
+            {"lola": {"title": "Lola", "year": None, "director": "Jacques Demy"}}
+        )
+    assert client.unmatched_detail == [
+        {"key": "lola", "title": "Lola", "reason": "director_veto"}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_unmatched_reason_override_director_mismatch():
+    async def detail(client, url):
+        return _detail(40641, "Lola", 1961, "Someone Else")
+
+    client = tmdb.TMDBClient(api_key="test")
+    client.overrides = {"lola": 40641}
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=detail)):
+        await client.enrich(
+            {"lola": {"title": "Lola", "year": None, "director": "Jacques Demy"}}
+        )
+    assert client.unmatched_detail[0]["reason"] == "override_director_mismatch"
+
+
+@pytest.mark.asyncio
+async def test_unmatched_reason_http_error():
+    async def boom(client, url):
+        raise httpx.ConnectError("connection refused")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=boom)):
+        await client.enrich({"x": {"title": "Nope", "year": None, "director": None}})
+    assert client.unmatched_detail[0]["reason"] == "error:ConnectError"

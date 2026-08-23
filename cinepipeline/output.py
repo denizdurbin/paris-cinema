@@ -16,6 +16,7 @@ def build_payload(
     results: list[AdapterResult],
     accessibility: dict[str, dict],
     generated_at: datetime,
+    unmatched_films: list[dict] | None = None,
 ) -> dict:
     return {
         "generated_at": generated_at.isoformat(),
@@ -28,6 +29,10 @@ def build_payload(
             }
             for r in results
         ],
+        # Match health is data, not a CI log line: which films are playing
+        # without metadata, and why ("no_candidates", "below_threshold",
+        # "director_veto", "override_director_mismatch", "error:*").
+        "unmatched_films": unmatched_films or [],
         "venues": [
             {
                 "id": v.id,

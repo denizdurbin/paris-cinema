@@ -130,7 +130,8 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
     )
 
     payload = output.build_payload(
-        merged, films, list(results), dulac.accessibility, generated_at
+        merged, films, list(results), dulac.accessibility, generated_at,
+        unmatched_films=tmdb.unmatched_detail,
     )
 
     failed = {v for r in results for v in r.failed_venues}
@@ -144,8 +145,8 @@ async def run(out_dir: Path = DEFAULT_OUT, baseline_url: str = BASELINE_URL) -> 
         f"{len(payload['films'])} films, {len(failed)} failed venues, "
         f"{len(tmdb.unmatched)} unmatched films"
     )
-    for title in tmdb.unmatched:
-        print(f"  unmatched: {title}")
+    for u in tmdb.unmatched_detail:
+        print(f"  unmatched: {u['title']} ({u['reason']})")
     return 0
 
 

@@ -124,12 +124,15 @@ def _segments(raw: str) -> list[str]:
 def _names_compatible(hint: str, actual: str) -> bool:
     """True when two single names could refer to the same person.
 
-    Sources routinely disagree on *transliteration* (TMDB's "Jānis
-    Cimmermanis" vs AlloCiné's "Janis Cimermanis") and on *initials*
-    ("G.W. Pabst" vs "Georg Wilhelm Pabst"). Folded-character equality is
-    therefore not enough: compare segments, letting one fold- or
-    character-drop difference slide, and treat initials as standing for the
-    full given name.
+    Sources disagree constantly about how a person is credited: transliteration
+    ("Jānis Cimmermanis" vs "Janis Cimermanis"), initials ("G.W. Pabst" vs
+    "Georg Wilhelm Pabst"), and Iberian/Latin surnames where one side keeps the
+    maternal family name and the other drops it ("Álvaro Olmos" vs "Alvaro
+    Olmos Torrico"). Folded-character equality is therefore not enough.
+
+    Compare segments: the surname (last segment) must match, OR one name's
+    segment list must be a prefix of the other (the trailing surname dropped).
+    Given names align pairwise, an initial standing for the full name.
     """
     if name_key(hint) == name_key(actual):
         return True
@@ -137,10 +140,11 @@ def _names_compatible(hint: str, actual: str) -> bool:
     if not hs or not as_:
         return False
     if hs[-1] != as_[-1] and not _close_enough(hs[-1], as_[-1]):
-        # Surnames must at least be within one character of each other —
-        # "Cimmermanis" vs "Cimermanis" is the same name; "Pabst" vs
-        # "von Braun" is not.
-        return False
+        # Surnames disagree. Accept only the "maternal surname dropped" shape:
+        # one side is a strict prefix of the other ("alvaro olmos" ⊂ "alvaro
+        # olmos torrico"). Anything else ("pabst" vs "vonbraun") is a mismatch.
+        shorter, longer = (hs, as_) if len(hs) < len(as_) else (as_, hs)
+        return _segments_prefix(shorter, longer)
     given_h, given_a = hs[:-1], as_[:-1]
     if len(given_h) != len(given_a):
         shorter, longer = (
@@ -153,6 +157,20 @@ def _names_compatible(hint: str, actual: str) -> bool:
             if h[0] != a[0]:
                 return False
         elif h != a and not _close_enough(h, a):
+            return False
+    return True
+
+
+def _segments_prefix(shorter: list[str], longer: list[str]) -> bool:
+    """True when every segment of `shorter` matches the corresponding leading
+    segment of `longer` (initials may stand for full names)."""
+    if len(shorter) >= len(longer):
+        return False
+    for s, l in zip(shorter, longer):
+        if len(s) == 1 or len(l) == 1:
+            if s[0] != l[0]:
+                return False
+        elif s != l and not _close_enough(s, l):
             return False
     return True
 
@@ -191,11 +209,23 @@ class TMDBClient:
         self.api_key = api_key or os.environ.get("TMDB_API_KEY", "")
         self.overrides = load_overrides()
         self.unmatched: list[str] = []
+        # Structured view of every miss: ends up in the payload's
+        # unmatched_films so match health is visible without reading CI logs.
+        self.unmatched_detail: list[dict] = []
+
+    def _mark_unmatched(self, key: str, display: str, reason: str) -> None:
+        self.unmatched.append(display)
+        self.unmatched_detail.append({"key": key, "title": display, "reason": reason})
 
     async def _search_and_detail(
         self, c, display: str, hints: dict
-    ) -> dict | None:
+    ) -> tuple[dict | None, str | None]:
         """Search TMDB, pick the best candidate, fetch its detail.
+
+        Returns (detail, None) on success, (None, reason) on failure; the
+        reason ("no_candidates", "below_threshold", "director_veto") ends up
+        in the payload's unmatched_films so misses are diagnosable without
+        reading CI logs.
 
         Tries the plain fr-FR search first, then a year-filtered one: generic
         one-word titles ("Girl", "Paradise") bury the actual film under
@@ -224,12 +254,15 @@ class TMDBClient:
         # (Demy's Lola hinted as 2013), so score again without it.
         passes = [(year, True), (None, True)] if year else [(None, True)]
 
+        reason = "no_candidates"
         for pass_year, _ in passes:
             for url in urls:
                 found = await _get_json_retried(c, url)
                 candidates = found.get("results", [])
                 if not candidates:
                     continue
+                if reason == "no_candidates":
+                    reason = "below_threshold"
                 # Check the top candidates in score order, not just the single
                 # best: same-title same-year films ("Paradise" x2 in 2026) tie
                 # on title+year, and the director hint is the only way to tell
@@ -251,8 +284,9 @@ class TMDBClient:
                         "&language=en-US&append_to_response=credits",
                     )
                     if not director_mismatch(director, director_of(detail)):
-                        return detail
-        return None
+                        return detail, None
+                    reason = "director_veto"
+        return None, reason
 
     async def enrich(self, titles: dict[str, dict]) -> dict[str, FilmMeta]:
         """titles maps title_key -> {"title", "year", "director"} hints.
@@ -279,12 +313,18 @@ class TMDBClient:
                                 "&language=en-US&append_to_response=credits",
                             )
                         else:
-                            detail = await self._search_and_detail(c, display, hints)
+                            detail, reason = await self._search_and_detail(
+                                c, display, hints
+                            )
                             if detail is None:
-                                self.unmatched.append(display)
+                                self._mark_unmatched(key, display, reason or "unknown")
                                 continue
                         if director_mismatch(hints.get("director"), director_of(detail)):
-                            self.unmatched.append(display)
+                            self._mark_unmatched(
+                                key,
+                                display,
+                                "override_director_mismatch" if forced else "director_veto",
+                            )
                             continue
                         out[key] = FilmMeta(
                             tmdb_id=detail.get("id"),
@@ -296,8 +336,8 @@ class TMDBClient:
                             year=int((detail.get("release_date") or "0")[:4] or 0) or None,
                             director=director_of(detail),
                         )
-                    except Exception:
-                        self.unmatched.append(display)
+                    except Exception as e:
+                        self._mark_unmatched(key, display, f"error:{type(e).__name__}")
         except Exception:
             return out
         return out

@@ -36,6 +36,28 @@ jobs:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           BASELINE_URL: ${{ vars.BASELINE_URL }}
 
+      # Match health is data, not a log line: fail loudly when a big share of
+      # what's playing has no metadata, and always leave the per-film reasons
+      # in the job summary.
+      - name: Check TMDB match health
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+          d = json.load(open("web/public/data/screenings.json", encoding="utf-8"))
+          misses = d.get("unmatched_films", [])
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(f"## TMDB match health: {len(misses)} unmatched\n\n")
+              for m in misses:
+                  f.write(f"- **{m['title']}** — `{m['reason']}`\n")
+          playing = {s["film_key"] for s in d["screenings"] if s.get("film_key")}
+          ratio = len(misses) / max(1, len(playing))
+          if len(misses) > 8 and ratio > 0.15:
+              raise SystemExit(
+                  f"{len(misses)}/{len(playing)} playing films unmatched ({ratio:.0%})"
+              )
+          EOF
+
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
