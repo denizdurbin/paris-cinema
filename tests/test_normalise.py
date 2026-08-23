@@ -51,6 +51,11 @@ def test_title_key_is_accent_and_case_insensitive():
     assert normalise.title_key("Les Vacances de M. Hulot") == "lesvacancesdemhulot"
 
 
+def test_title_key_folds_turkish_dotless_i():
+    """NFKD has no decomposition for ı; without folding, "Aydın" ≠ "Aydin"."""
+    assert normalise.title_key("Aydın") == normalise.title_key("Aydin")
+
+
 def test_parse_version_from_experiences():
     assert normalise.parse_version(["Localization.Version.Original"]) is Version.VO
     assert normalise.parse_version(["Format.Projection.Digital"]) is Version.VF

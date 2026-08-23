@@ -33,7 +33,10 @@ def clean_title(raw: str) -> str:
 
 
 def title_key(raw: str) -> str:
-    t = unicodedata.normalize("NFKD", raw.casefold())
+    # NFKD has no decomposition for the Turkish dotless ı, so it survives as a
+    # distinct letter: AlloCiné writes "Aydin" where TMDB writes "Aydın" and
+    # the same person reads as a director mismatch. Fold it to plain i.
+    t = unicodedata.normalize("NFKD", raw.casefold().replace("ı", "i"))
     return "".join(c for c in t if c.isalnum() and not unicodedata.combining(c))
 
 

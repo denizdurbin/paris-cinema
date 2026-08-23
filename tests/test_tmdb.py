@@ -126,6 +126,13 @@ def test_director_mismatch_is_accent_insensitive():
     assert not tmdb.director_mismatch("Denis Côté", "Denis Cote")
 
 
+def test_director_mismatch_folds_turkish_dotless_i():
+    """Une affaire turque: AlloCiné writes "Aydin", TMDB "Aydın" — same
+    director, and NFKD has no decomposition for ı. This false mismatch kept
+    the film unmatched (and posterless) for days."""
+    assert not tmdb.director_mismatch("Hüseyin Aydin Gürsoy", "Hüseyin Aydın Gürsoy")
+
+
 def _detail(tmdb_id, title, year, director):
     return {
         "id": tmdb_id,
