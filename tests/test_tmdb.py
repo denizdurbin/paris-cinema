@@ -133,6 +133,21 @@ def test_director_mismatch_folds_turkish_dotless_i():
     assert not tmdb.director_mismatch("Hüseyin Aydin Gürsoy", "Hüseyin Aydın Gürsoy")
 
 
+def test_director_mismatch_accepts_initials():
+    """Loulou: AlloCiné credits "Georg Wilhelm Pabst", TMDB "G.W. Pabst" —
+    the same person, and the initials must not veto the match."""
+    assert not tmdb.director_mismatch("Georg Wilhelm Pabst", "G.W. Pabst")
+    assert not tmdb.director_mismatch("G.W. Pabst", "Georg Wilhelm Pabst")
+    assert tmdb.director_mismatch("Georg Wilhelm Pabst", "G.W. von Braun")
+
+
+def test_director_mismatch_folds_macrons():
+    """Les Espiègles: AlloCiné writes "Janis", TMDB "Jānis". NFKD does not
+    decompose ā, so the accent stripping never reached it. The year hint
+    also matches (2016), so the first pass accepts the film."""
+    assert not tmdb.director_mismatch("Janis Cimermanis", "Jānis Cimermanis")
+
+
 def _detail(tmdb_id, title, year, director):
     return {
         "id": tmdb_id,
@@ -194,6 +209,37 @@ async def test_enrich_without_year_hint_does_not_retry():
         )
     assert out["girl"].tmdb_id == 717634
     assert sum("search/movie" in u for u in calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_enrich_recovers_from_rerelease_year_hint():
+    """Lola at Écoles: AlloCiné hints year=2013 (the re-release) for Demy's
+    1961 film. With the year hint the correct candidate scores 1.0 - 0.50 =
+    0.50 < threshold; the second pass drops the year and the director hint
+    picks the 1961 original over the 2014 namesake."""
+    demy = cand("Lola", year=1961)
+    demy["id"] = 40641
+    namesake = cand("Lola", year=2014)
+    namesake["id"] = 285215
+
+    async def fake_get_json(client, url):
+        if "search/movie" in url and "year=2013" in url:
+            return {"results": [namesake]}
+        if "search/movie" in url:
+            return {"results": [namesake, demy]}
+        if "movie/40641" in url:
+            return _detail(40641, "Lola", 1961, "Jacques Demy")
+        if "movie/285215" in url:
+            return _detail(285215, "Lola", 2014, "Kevin Ang")
+        raise AssertionError(f"unexpected url {url}")
+
+    client = tmdb.TMDBClient(api_key="test")
+    with patch.object(tmdb, "get_json", new=AsyncMock(side_effect=fake_get_json)):
+        out = await client.enrich(
+            {"lola": {"title": "Lola", "year": 2013, "director": "Jacques Demy"}}
+        )
+    assert out["lola"].tmdb_id == 40641
+    assert out["lola"].director == "Jacques Demy"
 
 
 @pytest.mark.asyncio

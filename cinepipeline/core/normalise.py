@@ -40,6 +40,19 @@ def title_key(raw: str) -> str:
     return "".join(c for c in t if c.isalnum() and not unicodedata.combining(c))
 
 
+def name_key(raw: str) -> str:
+    """title_key plus precomposed-letter folds NFKD doesn't decompose.
+
+    "Jānis" (ā = U+0101) NFKD-decomposes to "jaānis" — the ā stays — so the
+    accent-stripping above never reaches it and "Cimmermanis" ≠ "Cimermanis".
+    Fold the common precomposed vowels sources disagree about.
+    """
+    folded = raw.casefold().translate(
+        str.maketrans({"ā": "a", "ē": "e", "ī": "i", "ō": "o", "ū": "u"})
+    )
+    return title_key(folded)
+
+
 def parse_version(experiences: Iterable[str]) -> Version:
     tags = set(experiences)
     if "Localization.Version.Original" in tags:

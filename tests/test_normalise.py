@@ -56,6 +56,13 @@ def test_title_key_folds_turkish_dotless_i():
     assert normalise.title_key("Aydın") == normalise.title_key("Aydin")
 
 
+def test_name_key_folds_precomposed_macrons():
+    """NFKD does not decompose ā/ē/ī/ō/ū, so title_key alone leaves them.
+    (Only the accented vowel is folded — doubling like Cimmermanis vs
+    Cimermanis is a transliteration difference, out of scope.)"""
+    assert normalise.name_key("Jānis") == normalise.name_key("Janis")
+
+
 def test_parse_version_from_experiences():
     assert normalise.parse_version(["Localization.Version.Original"]) is Version.VO
     assert normalise.parse_version(["Format.Projection.Digital"]) is Version.VF
