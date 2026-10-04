@@ -11,7 +11,7 @@ import json
 import re
 from datetime import datetime
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from cinepipeline.adapters.base import AdapterResult
 from cinepipeline.core import normalise, venues
